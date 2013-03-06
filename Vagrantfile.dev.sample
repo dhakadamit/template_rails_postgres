@@ -1,0 +1,25 @@
+Vagrant::Config.run do |config|
+  config.vm.box = "precise64"
+  config.vm.box_url = "https://google.com"
+
+  config.vm.share_folder "vagrant_host_home", "/home/host", "~/vagrant_host", {:create => true}
+  config.vm.share_folder "projectx", "/home/vagrant/projectx", "."
+
+  config.vm.define :dev do |cm_config|
+    cm_config.vm.forward_port 3000, 3000
+
+    cm_config.vm.network :hostonly, "192.168.1.35"
+
+    cm_config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+
+    cm_config.vm.provision :puppet do |puppet|
+      puppet.manifests_path = "puppet/manifests/dev"
+      puppet.module_path = "puppet/modules"
+      puppet.options = "--verbose"
+      puppet.manifest_file = "vagrant.pp"
+    end
+
+    cm_config.vm.customize ["modifyvm", :id, "--memory", 2048]
+    cm_config.vm.customize ["modifyvm", :id, "--cpus", 8]
+  end
+end
